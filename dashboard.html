@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema de Estoque</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Sistema Estoque</h2>
+                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+                <li><a href="produtos.html">📦 Produtos</a></li>
+                <li><a href="categorias.html">🏷️ Categorias</a></li>
+                <li><a href="vendas.html">💰 Vendas</a></li>
+                <li><a href="relatorios.html">📈 Relatórios</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </nav>
+        
+        <main class="main-content">
+            <header class="page-header">
+                <h1>Dashboard</h1>
+                <p>Visão geral do seu negócio</p>
+            </header>
+            
+            <div class="dashboard-cards">
+                <div class="card">
+                    <div class="card-icon">📦</div>
+                    <div class="card-content">
+                        <h3>Total de Produtos</h3>
+                        <p class="card-number" id="totalProducts">0</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">💰</div>
+                    <div class="card-content">
+                        <h3>Vendas do Mês</h3>
+                        <p class="card-number" id="monthSales">R$ 0,00</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">⚠️</div>
+                    <div class="card-content">
+                        <h3>Estoque Baixo</h3>
+                        <p class="card-number" id="lowStock">0</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">🏷️</div>
+                    <div class="card-content">
+                        <h3>Categorias</h3>
+                        <p class="card-number" id="totalCategories">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-charts">
+                <div class="chart-container">
+                    <h3>Vendas dos Últimos 7 Dias</h3>
+                    <div class="simple-chart" id="salesChart"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

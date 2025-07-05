@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendas - Sistema de Estoque</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/table.css">
+</head>
+<body>
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Sistema Estoque</h2>
+                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html">📊 Dashboard</a></li>
+                <li><a href="produtos.html">📦 Produtos</a></li>
+                <li><a href="categorias.html">🏷️ Categorias</a></li>
+                <li><a href="vendas.html" class="active">💰 Vendas</a></li>
+                <li><a href="relatorios.html">📈 Relatórios</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </nav>
+        
+        <main class="main-content">
+            <header class="page-header">
+                <h1>Vendas</h1>
+                <button class="btn btn-primary" onclick="openSaleModal()">+ Nova Venda</button>
+            </header>
+            
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Data/Hora</th>
+                            <th>Itens</th>
+                            <th>Valor Total</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTableBody">
+                        <!-- Vendas serão inseridas aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal para Nova Venda -->
+    <div class="modal" id="saleModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Nova Venda</h2>
+                <button class="modal-close" onclick="closeSaleModal()">&times;</button>
+            </div>
+            
+            <form class="modal-form" id="saleForm">
+                <div class="sale-items">
+                    <h3>Itens da Venda</h3>
+                    <div class="add-item-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="saleProduct">Produto</label>
+                                <select id="saleProduct">
+                                    <option value="">Selecione um produto</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="saleQuantity">Quantidade</label>
+                                <input type="number" id="saleQuantity" min="1" value="1">
+                            </div>
+                            <div class="form-group">
+                                <button type="button" class="btn btn-secondary" onclick="addSaleItem()">Adicionar</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sale-items-list">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Preço Unit.</th>
+                                    <th>Subtotal</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="saleItemsBody">
+                                <!-- Itens da venda serão inseridos aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="sale-total">
+                        <h3>Total: R$ <span id="saleTotal">0,00</span></h3>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeSaleModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Finalizar Venda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/vendas.js"></script>
+</body>
+</html>
