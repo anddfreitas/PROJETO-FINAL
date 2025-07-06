@@ -1,9 +1,6 @@
-// Carregar o Cognito SDK no seu HTML, antes deste script:
-// <script src="https://cdnjs.cloudflare.com/ajax/libs/amazon-cognito-identity-js/5.2.7/amazon-cognito-identity.min.js"></script>
-
 const poolData = {
-    UserPoolId: 'us-east-1_RwtbfPRiL',     // 🔹 Substitua pelo seu User Pool ID real
-    ClientId: '771f1rlvfsflq5nqhv84dbodt4'     // 🔹 Substitua pelo seu App Client ID real
+    UserPoolId: 'us-east-1_RwtbfPRiL',    
+    ClientId: '771f1rlvfsflq5nqhv84dbodt4'   
 };
 
 const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
@@ -54,7 +51,7 @@ function login(email, password) {
     newPasswordRequired: function (userAttributes, requiredAttributes) {
     // Remover atributos que não podem ser alterados
     delete userAttributes.email_verified;
-    delete userAttributes.email;  // <- Remova também o email!
+    delete userAttributes.email;  
 
     // Pedir nova senha
     const newPassword = prompt("Você precisa definir uma nova senha:");
