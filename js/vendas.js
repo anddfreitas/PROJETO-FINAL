@@ -1,253 +1,287 @@
-// Gerenciamento de vendas
-// TODO: Integrar com API REST
+let sales = [];
+let currentSaleItems = [];
+let products = [];
+let editingSaleId = null;
 
-let sales = JSON.parse(localStorage.getItem("sales") || "[]")
-const products = JSON.parse(localStorage.getItem("products") || "[]")
-let currentSaleItems = []
-
-// Inicializar dados de exemplo se não existirem
-if (sales.length === 0) {
-  sales = [
-    {
-      id: 1,
-      date: "2024-01-15T10:30:00",
-      items: [{ productName: "Mouse Logitech", quantity: 2, unitPrice: 89.9 }],
-      total: 179.8,
-    },
-    {
-      id: 2,
-      date: "2024-01-16T14:15:00",
-      items: [{ productName: "Notebook Dell", quantity: 1, unitPrice: 2500.0 }],
-      total: 2500.0,
-    },
-  ]
-  localStorage.setItem("sales", JSON.stringify(sales))
+async function fetchSalesFromAPI() {
+  try {
+    const res = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/vendas");
+    const data = await res.json();
+    sales = data;
+  } catch (err) {
+    alert("Erro ao carregar vendas.");
+    console.error(err);
+  }
 }
 
-function loadSales() {
-  // TODO: Substituir por chamada à API
-  // const response = await fetch('/api/sales');
-  // sales = await response.json();
+async function fetchProductsFromAPI() {
+  try {
+    const res = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/produtos");
+    const data = await res.json();
+    products = data;
+  } catch (err) {
+    alert("Erro ao carregar produtos.");
+    console.error(err);
+  }
+}
 
-  const tbody = document.getElementById("salesTableBody")
-  tbody.innerHTML = ""
+async function loadSales() {
+  await fetchSalesFromAPI();
+
+  const tbody = document.getElementById("salesTableBody");
+  tbody.innerHTML = "";
 
   sales.forEach((sale) => {
-    const row = document.createElement("tr")
-    const itemsText = sale.items.map((item) => `${item.productName} (${item.quantity}x)`).join(", ")
+    const row = document.createElement("tr");
+    const itemsText = sale.items.map((item) => `${item.productName} (${item.quantity}x)`).join(", ");
 
     row.innerHTML = `
-            <td>${sale.id}</td>
-            <td>${formatDateTime(sale.date)}</td>
-            <td>${itemsText}</td>
-            <td>${formatCurrency(sale.total)}</td>
-            <td class="action-buttons">
-                <button class="btn btn-small btn-secondary" onclick="viewSale(${sale.id})">Ver Detalhes</button>
-            </td>
-        `
-    tbody.appendChild(row)
-  })
+      <td>${sale.saleId}</td>
+      <td>${formatDateTime(sale.dateTime)}</td>
+      <td>${itemsText}</td>
+      <td>${formatCurrency(sale.totalValue)}</td>
+      <td class="action-buttons">
+        <button class="btn btn-small btn-secondary" onclick="editSale('${sale.saleId}')">Editar</button>
+        <button class="btn btn-small btn-danger" onclick="deleteSale('${sale.saleId}')">Excluir</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
 }
 
 function loadProductsForSale() {
-  const select = document.getElementById("saleProduct")
-  select.innerHTML = '<option value="">Selecione um produto</option>'
+  const select = document.getElementById("saleProduct");
+  select.innerHTML = '<option value="">Selecione um produto</option>';
 
   products.forEach((product) => {
     if (product.quantity > 0) {
-      const option = document.createElement("option")
-      option.value = product.id
-      option.textContent = `${product.name} (Estoque: ${product.quantity})`
-      option.dataset.price = product.price
-      option.dataset.stock = product.quantity
-      select.appendChild(option)
+      const option = document.createElement("option");
+      option.value = product.productId;
+      option.textContent = `${product.name} (Estoque: ${product.quantity})`;
+      option.dataset.price = product.price;
+      option.dataset.stock = product.quantity;
+      select.appendChild(option);
     }
-  })
+  });
 }
 
 function openSaleModal() {
-  currentSaleItems = []
-  const modal = document.getElementById("saleModal")
-  const form = document.getElementById("saleForm")
+  const modal = document.getElementById("saleModal");
+  const form = document.getElementById("saleForm");
 
-  form.reset()
-  updateSaleItemsTable()
-  updateSaleTotal()
-  loadProductsForSale()
+  if (!editingSaleId) {
+    // Se não estiver editando, limpa a lista para nova venda
+    currentSaleItems = [];
+    form.reset();
+  }
 
-  modal.style.display = "block"
+  updateSaleItemsTable();
+  updateSaleTotal();
+  loadProductsForSale();
+
+  modal.style.display = "block";
 }
 
 function closeSaleModal() {
-  document.getElementById("saleModal").style.display = "none"
-  currentSaleItems = []
+  document.getElementById("saleModal").style.display = "none";
+  currentSaleItems = [];
+  editingSaleId = null;
 }
 
 function addSaleItem() {
-  const productSelect = document.getElementById("saleProduct")
-  const quantityInput = document.getElementById("saleQuantity")
+  const productSelect = document.getElementById("saleProduct");
+  const quantityInput = document.getElementById("saleQuantity");
 
-  const productId = Number.parseInt(productSelect.value)
-  const quantity = Number.parseInt(quantityInput.value)
+  const productId = productSelect.value;
+  const quantity = Number.parseInt(quantityInput.value);
 
   if (!productId || !quantity || quantity <= 0) {
-    alert("Selecione um produto e informe uma quantidade válida.")
-    return
+    alert("Selecione um produto e informe uma quantidade válida.");
+    return;
   }
 
-  const product = products.find((p) => p.id === productId)
-  const selectedOption = productSelect.selectedOptions[0]
-  const availableStock = Number.parseInt(selectedOption.dataset.stock)
+  const product = products.find((p) => p.productId === productId);
+  const availableStock = product.quantity;
 
   if (quantity > availableStock) {
-    alert(`Quantidade indisponível. Estoque atual: ${availableStock}`)
-    return
+    alert(`Quantidade indisponível. Estoque atual: ${availableStock}`);
+    return;
   }
 
-  // Verificar se o produto já está na lista
-  const existingItemIndex = currentSaleItems.findIndex((item) => item.productId === productId)
+  const existingItemIndex = currentSaleItems.findIndex((item) => item.productId === productId);
 
   if (existingItemIndex >= 0) {
-    const totalQuantity = currentSaleItems[existingItemIndex].quantity + quantity
+    const totalQuantity = currentSaleItems[existingItemIndex].quantity + quantity;
     if (totalQuantity > availableStock) {
-      alert(`Quantidade total excede o estoque disponível: ${availableStock}`)
-      return
+      alert(`Quantidade total excede o estoque disponível: ${availableStock}`);
+      return;
     }
-    currentSaleItems[existingItemIndex].quantity = totalQuantity
+    currentSaleItems[existingItemIndex].quantity = totalQuantity;
   } else {
     currentSaleItems.push({
-      productId: productId,
+      productId,
       productName: product.name,
-      quantity: quantity,
+      quantity,
       unitPrice: product.price,
-    })
+    });
   }
 
-  updateSaleItemsTable()
-  updateSaleTotal()
+  updateSaleItemsTable();
+  updateSaleTotal();
 
-  // Limpar seleção
-  productSelect.value = ""
-  quantityInput.value = "1"
+  productSelect.value = "";
+  quantityInput.value = "1";
 }
 
 function removeSaleItem(index) {
-  currentSaleItems.splice(index, 1)
-  updateSaleItemsTable()
-  updateSaleTotal()
+  currentSaleItems.splice(index, 1);
+  updateSaleItemsTable();
+  updateSaleTotal();
 }
 
 function updateSaleItemsTable() {
-  const tbody = document.getElementById("saleItemsBody")
-  tbody.innerHTML = ""
+  const tbody = document.getElementById("saleItemsBody");
+  tbody.innerHTML = "";
 
   currentSaleItems.forEach((item, index) => {
-    const row = document.createElement("tr")
-    const subtotal = item.quantity * item.unitPrice
+    const subtotal = item.quantity * item.unitPrice;
 
+    const row = document.createElement("tr");
     row.innerHTML = `
-            <td>${item.productName}</td>
-            <td>${item.quantity}</td>
-            <td>${formatCurrency(item.unitPrice)}</td>
-            <td>${formatCurrency(subtotal)}</td>
-            <td>
-                <button class="btn btn-small btn-danger" onclick="removeSaleItem(${index})">Remover</button>
-            </td>
-        `
-    tbody.appendChild(row)
-  })
+      <td>${item.productName}</td>
+      <td>${item.quantity}</td>
+      <td>${formatCurrency(item.unitPrice)}</td>
+      <td>${formatCurrency(subtotal)}</td>
+      <td>
+        <button class="btn btn-small btn-danger" onclick="removeSaleItem(${index})">Remover</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
 }
 
 function updateSaleTotal() {
-  const total = currentSaleItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)
-  document.getElementById("saleTotal").textContent = formatCurrency(total).replace("R$ ", "")
+  const total = currentSaleItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  document.getElementById("saleTotal").textContent = formatCurrency(total).replace("R$ ", "");
 }
 
-function saveSale() {
+async function saveSale() {
   if (currentSaleItems.length === 0) {
-    alert("Adicione pelo menos um item à venda.")
-    return
+    alert("Adicione pelo menos um item à venda.");
+    return;
   }
 
-  const total = currentSaleItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)
+  const total = currentSaleItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
-  // TODO: Integrar com API
-  // const response = await fetch('/api/sales', {
-  //     method: 'POST',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: JSON.stringify({ items: currentSaleItems, total })
-  // });
-
-  const newSale = {
-    id: Math.max(...sales.map((s) => s.id), 0) + 1,
-    date: new Date().toISOString(),
+  const sale = {
+    saleId: editingSaleId || crypto.randomUUID(),
+    dateTime: new Date().toISOString(),
     items: currentSaleItems.map((item) => ({
+      productId: item.productId,
       productName: item.productName,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
     })),
-    total: total,
+    totalValue: total,
+  };
+
+  const method = editingSaleId ? "PUT" : "POST";
+
+  try {
+    const res = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/vendas", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sale),
+    });
+
+    if (!res.ok) throw new Error("Erro ao salvar venda");
+
+    await loadSales();
+    closeSaleModal();
+    alert("Venda " + (editingSaleId ? "atualizada" : "realizada") + " com sucesso!");
+  } catch (err) {
+    alert("Erro ao salvar venda.");
+    console.error(err);
+  } finally {
+    editingSaleId = null;
   }
-
-  sales.push(newSale)
-  localStorage.setItem("sales", JSON.stringify(sales))
-
-  // Atualizar estoque dos produtos
-  currentSaleItems.forEach((item) => {
-    const productIndex = products.findIndex((p) => p.id === item.productId)
-    if (productIndex >= 0) {
-      products[productIndex].quantity -= item.quantity
-    }
-  })
-  localStorage.setItem("products", JSON.stringify(products))
-
-  loadSales()
-  closeSaleModal()
-  alert("Venda realizada com sucesso!")
 }
 
-function viewSale(id) {
-  const sale = sales.find((s) => s.id === id)
-  if (!sale) return
+function viewSale(saleId) {
+  const sale = sales.find((s) => s.saleId === saleId);
+  if (!sale) return;
 
   const itemsDetails = sale.items
-    .map(
-      (item) =>
-        `${item.productName}: ${item.quantity}x ${formatCurrency(item.unitPrice)} = ${formatCurrency(item.quantity * item.unitPrice)}`,
-    )
-    .join("\n")
+    .map((item) => `${item.productName}: ${item.quantity}x ${formatCurrency(item.unitPrice)} = ${formatCurrency(item.quantity * item.unitPrice)}`)
+    .join("\n");
 
   alert(
-    `Detalhes da Venda #${sale.id}\n\nData: ${formatDateTime(sale.date)}\n\nItens:\n${itemsDetails}\n\nTotal: ${formatCurrency(sale.total)}`,
-  )
+    `Detalhes da Venda\n\nData: ${formatDateTime(sale.dateTime)}\n\nItens:\n${itemsDetails}\n\nTotal: ${formatCurrency(sale.totalValue)}`
+  );
+}
+
+function editSale(saleId) {
+  editingSaleId = saleId;
+  const sale = sales.find((s) => s.saleId === saleId);
+  if (!sale) return;
+
+  currentSaleItems = sale.items.map((item) => ({
+    productId: products.find((p) => p.name === item.productName)?.productId || "",
+    productName: item.productName,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice
+  }));
+
+  openSaleModal();
+  updateSaleItemsTable();
+  updateSaleTotal();
+
+  // Não remova do array local, a atualização é pelo backend
+}
+
+async function deleteSale(saleId) {
+  if (!confirm("Tem certeza que deseja excluir esta venda?")) return;
+
+  try {
+    const res = await fetch(`https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/vendas?saleId=${encodeURIComponent(saleId)}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) throw new Error("Erro ao excluir venda");
+
+    alert("Venda excluída com sucesso!");
+    await loadSales();
+  } catch (err) {
+    alert("Erro ao excluir venda.");
+    console.error(err);
+  }
 }
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(value)
+  }).format(value);
 }
 
 function formatDateTime(dateString) {
-  return new Date(dateString).toLocaleString("pt-BR")
+  return new Date(dateString).toLocaleString("pt-BR");
 }
 
-// Event listeners
-document.addEventListener("DOMContentLoaded", () => {
-  loadSales()
+document.addEventListener("DOMContentLoaded", async () => {
+  await fetchProductsFromAPI();
+  await loadSales();
 
-  const saleForm = document.getElementById("saleForm")
+  const saleForm = document.getElementById("saleForm");
   saleForm.addEventListener("submit", (e) => {
-    e.preventDefault()
-    saveSale()
-  })
+    e.preventDefault();
+    saveSale();
+  });
 
-  // Fechar modal ao clicar fora
   window.addEventListener("click", (e) => {
-    const modal = document.getElementById("saleModal")
+    const modal = document.getElementById("saleModal");
     if (e.target === modal) {
-      closeSaleModal()
+      closeSaleModal();
     }
-  })
-})
+  });
+});

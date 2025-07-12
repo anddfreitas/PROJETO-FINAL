@@ -1,182 +1,183 @@
-// Gerenciamento de produtos
-// TODO: Integrar com API REST
+const API_URL = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/produtos";
+const CATEGORIES_API_URL = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/categorias";
 
-let products = JSON.parse(localStorage.getItem("products") || "[]")
-let categories = JSON.parse(localStorage.getItem("categories") || "[]")
-let editingProductId = null
+let products = [];
+let editingProductId = null;
 
-// Inicializar dados de exemplo se não existirem
-if (products.length === 0) {
-  products = [
-    {
-      id: 1,
-      name: "Notebook Dell",
-      category: "Eletrônicos",
-      quantity: 15,
-      price: 2500.0,
-      dateCreated: "2024-01-15",
-    },
-    {
-      id: 2,
-      name: "Mouse Logitech",
-      category: "Eletrônicos",
-      quantity: 5,
-      price: 89.9,
-      dateCreated: "2024-01-16",
-    },
-  ]
-  localStorage.setItem("products", JSON.stringify(products))
+async function loadProducts() {
+  try {
+    const response = await fetch(API_URL);
+    products = await response.json();
+
+    const tbody = document.getElementById("productsTableBody");
+    tbody.innerHTML = "";
+
+    products.forEach((product) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${product.productId}</td>
+        <td>${product.name}</td>
+        <td>${product.category}</td>
+        <td>${product.quantity}</td>
+        <td>${formatCurrency(product.price)}</td>
+        <td>${formatDate(product.createdAt)}</td>
+        <td class="action-buttons">
+            <button class="btn btn-small btn-secondary" onclick="editProduct('${product.productId}')">Editar</button>
+            <button class="btn btn-small btn-danger" onclick="deleteProduct('${product.productId}')">Excluir</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar produtos:", err);
+    alert("Erro ao carregar produtos.");
+  }
 }
 
-if (categories.length === 0) {
-  categories = [
-    { id: 1, name: "Eletrônicos" },
-    { id: 2, name: "Roupas" },
-    { id: 3, name: "Casa e Jardim" },
-  ]
-  localStorage.setItem("categories", JSON.stringify(categories))
-}
+async function loadCategories() {
+  try {
+    const response = await fetch(CATEGORIES_API_URL);
+    categories = await response.json();
 
-function loadProducts() {
-  // TODO: Substituir por chamada à API
-  // const response = await fetch('/api/products');
-  // products = await response.json();
+    const select = document.getElementById("productCategory");
+    select.innerHTML = '<option value="">Selecione uma categoria</option>';
 
-  const tbody = document.getElementById("productsTableBody")
-  tbody.innerHTML = ""
-
-  products.forEach((product) => {
-    const row = document.createElement("tr")
-    row.innerHTML = `
-            <td>${product.id}</td>
-            <td>${product.name}</td>
-            <td>${product.category}</td>
-            <td>${product.quantity}</td>
-            <td>${formatCurrency(product.price)}</td>
-            <td>${formatDate(product.dateCreated)}</td>
-            <td class="action-buttons">
-                <button class="btn btn-small btn-secondary" onclick="editProduct(${product.id})">Editar</button>
-                <button class="btn btn-small btn-danger" onclick="deleteProduct(${product.id})">Excluir</button>
-            </td>
-        `
-    tbody.appendChild(row)
-  })
-}
-
-function loadCategories() {
-  const select = document.getElementById("productCategory")
-  select.innerHTML = '<option value="">Selecione uma categoria</option>'
-
-  categories.forEach((category) => {
-    const option = document.createElement("option")
-    option.value = category.name
-    option.textContent = category.name
-    select.appendChild(option)
-  })
+    categories.forEach((category) => {
+      const option = document.createElement("option");
+      option.value = category.name;
+      option.textContent = category.name;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar categorias:", err);
+    alert("Erro ao carregar categorias.");
+  }
 }
 
 function openProductModal(productId = null) {
-  editingProductId = productId
-  const modal = document.getElementById("productModal")
-  const modalTitle = document.getElementById("modalTitle")
-  const form = document.getElementById("productForm")
+  editingProductId = productId;
+  const modal = document.getElementById("productModal");
+  const modalTitle = document.getElementById("modalTitle");
+  const form = document.getElementById("productForm");
 
   if (productId) {
-    const product = products.find((p) => p.id === productId)
-    modalTitle.textContent = "Editar Produto"
-    document.getElementById("productName").value = product.name
-    document.getElementById("productCategory").value = product.category
-    document.getElementById("productQuantity").value = product.quantity
-    document.getElementById("productPrice").value = product.price
+    const product = products.find((p) => p.productId === productId);
+    modalTitle.textContent = "Editar Produto";
+    document.getElementById("productName").value = product.name;
+    document.getElementById("productCategory").value = product.category;
+    document.getElementById("productQuantity").value = product.quantity;
+    document.getElementById("productPrice").value = product.price;
   } else {
-    modalTitle.textContent = "Novo Produto"
-    form.reset()
+    modalTitle.textContent = "Novo Produto";
+    form.reset();
   }
 
-  modal.style.display = "block"
+  modal.style.display = "block";
 }
 
 function closeProductModal() {
-  document.getElementById("productModal").style.display = "none"
-  editingProductId = null
+  document.getElementById("productModal").style.display = "none";
+  editingProductId = null;
 }
 
-function saveProduct(productData) {
-  // TODO: Integrar com API
-  // const response = await fetch('/api/products', {
-  //     method: editingProductId ? 'PUT' : 'POST',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: JSON.stringify(productData)
-  // });
+async function saveProduct(productData) {
+  try {
+    if (editingProductId) {
+      // PUT
+      const response = await fetch(API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: editingProductId, ...productData }),
+      });
 
-  if (editingProductId) {
-    const index = products.findIndex((p) => p.id === editingProductId)
-    products[index] = { ...products[index], ...productData }
-  } else {
-    const newProduct = {
-      id: Math.max(...products.map((p) => p.id), 0) + 1,
-      ...productData,
-      dateCreated: new Date().toISOString().split("T")[0],
+      if (!response.ok) throw new Error("Erro ao atualizar produto");
+    } else {
+      // POST
+      const newProduct = {
+        ...productData,
+        productId: generateUniqueId(),
+        createdAt: new Date().toISOString(),
+      };
+
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProduct),
+      });
+
+      if (!response.ok) throw new Error("Erro ao cadastrar produto");
     }
-    products.push(newProduct)
-  }
 
-  localStorage.setItem("products", JSON.stringify(products))
-  loadProducts()
-  closeProductModal()
+    await loadProducts();
+    closeProductModal();
+  } catch (err) {
+    console.error("Erro ao salvar produto:", err);
+    alert("Falha ao salvar produto.");
+  }
 }
 
-function editProduct(id) {
-  openProductModal(id)
+function editProduct(productId) {
+  openProductModal(productId);
 }
 
-function deleteProduct(id) {
-  if (confirm("Tem certeza que deseja excluir este produto?")) {
-    // TODO: Integrar com API
-    // await fetch(`/api/products/${id}`, { method: 'DELETE' });
+async function deleteProduct(productId) {
+  if (!confirm("Tem certeza que deseja excluir este produto?")) return;
 
-    products = products.filter((p) => p.id !== id)
-    localStorage.setItem("products", JSON.stringify(products))
-    loadProducts()
+  try {
+    const response = await fetch(API_URL, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId }),
+    });
+
+    if (!response.ok) throw new Error("Erro ao excluir produto");
+
+    await loadProducts();
+  } catch (err) {
+    console.error("Erro ao excluir produto:", err);
+    alert("Falha ao excluir produto.");
   }
+}
+
+function generateUniqueId() {
+  return "prod-" + Math.random().toString(36).substr(2, 9);
 }
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(value)
+  }).format(value);
 }
 
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString("pt-BR")
+  return new Date(dateString).toLocaleDateString("pt-BR");
 }
 
 // Event listeners
 document.addEventListener("DOMContentLoaded", () => {
-  loadProducts()
-  loadCategories()
+  loadProducts();
+  loadCategories();
 
-  const productForm = document.getElementById("productForm")
+  const productForm = document.getElementById("productForm");
   productForm.addEventListener("submit", (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const formData = new FormData(e.target)
+    const formData = new FormData(e.target);
     const productData = {
       name: formData.get("name"),
       category: formData.get("category"),
-      quantity: Number.parseInt(formData.get("quantity")),
-      price: Number.parseFloat(formData.get("price")),
-    }
+      quantity: parseInt(formData.get("quantity")),
+      price: parseFloat(formData.get("price")),
+    };
 
-    saveProduct(productData)
-  })
+    saveProduct(productData);
+  });
 
-  // Fechar modal ao clicar fora
   window.addEventListener("click", (e) => {
-    const modal = document.getElementById("productModal")
+    const modal = document.getElementById("productModal");
     if (e.target === modal) {
-      closeProductModal()
+      closeProductModal();
     }
-  })
-})
+  });
+});
