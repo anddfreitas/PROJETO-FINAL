@@ -39,6 +39,9 @@ function login(email, password) {
     onSuccess: function (result) {
       console.log('Login bem-sucedido!');
       const accessToken = result.getAccessToken().getJwtToken();
+      const idToken = result.getIdToken().getJwtToken();
+      // const idToken = result;
+      localStorage.setItem("idToken", idToken);
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("userEmail", email);
       window.location.href = "dashboard.html";

@@ -1,12 +1,19 @@
-const API_URL = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/produtos";
-const CATEGORIES_API_URL = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/categorias";
+const API_URL = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev";
+const token = localStorage.getItem("idToken");
 
 let products = [];
 let editingProductId = null;
 
 async function loadProducts() {
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(`${API_URL}/produtos`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
+
     products = await response.json();
 
     const tbody = document.getElementById("productsTableBody");
@@ -36,7 +43,13 @@ async function loadProducts() {
 
 async function loadCategories() {
   try {
-    const response = await fetch(CATEGORIES_API_URL);
+    const response = await fetch(`${API_URL}/categorias`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
     categories = await response.json();
 
     const select = document.getElementById("productCategory");
@@ -84,11 +97,15 @@ async function saveProduct(productData) {
   try {
     if (editingProductId) {
       // PUT
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/produtos`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
         body: JSON.stringify({ productId: editingProductId, ...productData }),
       });
+
 
       if (!response.ok) throw new Error("Erro ao atualizar produto");
     } else {
@@ -99,9 +116,12 @@ async function saveProduct(productData) {
         createdAt: new Date().toISOString(),
       };
 
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/produtos`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
         body: JSON.stringify(newProduct),
       });
 
@@ -124,11 +144,14 @@ async function deleteProduct(productId) {
   if (!confirm("Tem certeza que deseja excluir este produto?")) return;
 
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(`${API_URL}/produtos`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": token
+      },
       body: JSON.stringify({ productId }),
-    });
+      });
 
     if (!response.ok) throw new Error("Erro ao excluir produto");
 

@@ -1,4 +1,5 @@
-const API_BASE = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev";
+const API_URL = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev";
+const token = localStorage.getItem("idToken");
 
 const dashboardData = {
   totalProducts: 0,
@@ -11,15 +12,34 @@ const dashboardData = {
 async function loadDashboardData() {
   try {
     // Buscar produtos
-    const produtosRes = await fetch(`${API_BASE}/produtos`);
+    const produtosRes = await fetch(`${API_URL}/produtos`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
+
     const products = produtosRes.ok ? await produtosRes.json() : [];
 
     // Buscar categorias
-    const categoriasRes = await fetch(`${API_BASE}/categorias`);
+    const categoriasRes = await fetch(`${API_URL}/categorias`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
     const categories = categoriasRes.ok ? await categoriasRes.json() : [];
 
     // Buscar vendas
-    const vendasRes = await fetch(`${API_BASE}/vendas`);
+    const vendasRes = await fetch(`${API_URL}/vendas`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
     const sales = vendasRes.ok ? await vendasRes.json() : [];
 
     dashboardData.totalProducts = products.length;

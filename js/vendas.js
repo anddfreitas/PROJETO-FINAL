@@ -1,3 +1,6 @@
+const API_URL = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev";
+const token = localStorage.getItem("idToken");
+
 let sales = [];
 let currentSaleItems = [];
 let products = [];
@@ -5,7 +8,14 @@ let editingSaleId = null;
 
 async function fetchSalesFromAPI() {
   try {
-    const res = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/vendas");
+    const res = await fetch(`${API_URL}/vendas`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
+
     const data = await res.json();
     sales = data;
   } catch (err) {
@@ -16,7 +26,13 @@ async function fetchSalesFromAPI() {
 
 async function fetchProductsFromAPI() {
   try {
-    const res = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/produtos");
+    const res = await fetch(`${API_URL}/produtos`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
     const data = await res.json();
     products = data;
   } catch (err) {
@@ -188,11 +204,14 @@ async function saveSale() {
   const method = editingSaleId ? "PUT" : "POST";
 
   try {
-    const res = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/vendas", {
+    const res = await fetch(`${API_URL}/vendas`, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": token
+      },
       body: JSON.stringify(sale),
-    });
+      });
 
     if (!res.ok) throw new Error("Erro ao salvar venda");
 
@@ -245,6 +264,10 @@ async function deleteSale(saleId) {
   try {
     const res = await fetch(`https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/vendas?saleId=${encodeURIComponent(saleId)}`, {
       method: "DELETE",
+      headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
     });
 
     if (!res.ok) throw new Error("Erro ao excluir venda");

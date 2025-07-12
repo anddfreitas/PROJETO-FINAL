@@ -1,11 +1,20 @@
 // Gerenciamento de categorias via API REST
+const API_URL = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev";
+const token = localStorage.getItem("idToken");
 
 let categories = [];
 let editingCategoryId = null;
 
 async function loadCategories() {
   try {
-    const res = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/categorias");
+    const res = await fetch(`${API_URL}/categorias`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
+
     if (!res.ok) throw new Error("Erro ao carregar categorias");
     categories = await res.json();
   } catch (error) {
@@ -57,12 +66,16 @@ async function saveCategory(categoryData) {
   try {
     if (editingCategoryId) {
       // PUT - Atualizar categoria
-      const response = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/categorias", {
+      const response = await fetch(`${API_URL}/categorias`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
         body: JSON.stringify({ categoryId: editingCategoryId, ...categoryData }),
       });
 
+      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Erro ao atualizar categoria: ${response.status} - ${errorText}`);
@@ -71,11 +84,15 @@ async function saveCategory(categoryData) {
       // POST - Criar nova categoria
       // Para garantir id único, usamos timestamp. Pode ajustar para outra lógica.
       const newCategory = { categoryId: Date.now().toString(), ...categoryData };
-      const response = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/categorias", {
+      const response = await fetch(`${API_URL}/categorias`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
         body: JSON.stringify(newCategory),
       });
+
       if (!response.ok) throw new Error("Erro ao criar categoria");
     }
 
@@ -88,7 +105,13 @@ async function saveCategory(categoryData) {
 
 async function deleteCategory(categoryId) {
   // Verificar se a categoria está sendo usada por algum produto
-  const productsRes = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/produtos");
+  const productsRes = await fetch(`${API_URL}/produtos`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
   const products = productsRes.ok ? await productsRes.json() : [];
 
   const categoryInUse = products.some((product) => product.categoryId === categoryId);
@@ -100,11 +123,15 @@ async function deleteCategory(categoryId) {
 
   if (confirm("Tem certeza que deseja excluir esta categoria?")) {
     try {
-      const response = await fetch("https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev/categorias", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch(`${API_URL}/categorias`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
         body: JSON.stringify({ categoryId }),
       });
+
       if (!response.ok) throw new Error("Erro ao excluir categoria");
       await loadCategories();
     } catch (error) {

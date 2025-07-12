@@ -1,4 +1,5 @@
-const API_BASE = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev";
+const API_URL = "https://20w8idv45f.execute-api.us-east-1.amazonaws.com/dev";
+const token = localStorage.getItem("idToken");
 
 async function loadReports() {
   await Promise.all([loadTopProducts(), updateSalesPeriod(), loadLowStockProducts()]);
@@ -6,7 +7,14 @@ async function loadReports() {
 
 async function loadTopProducts() {
   try {
-    const res = await fetch(`${API_BASE}/vendas`);
+    const res = await fetch(`${API_URL}/vendas`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
+
     if (!res.ok) throw new Error("Erro ao buscar vendas");
     const sales = await res.json();
 
@@ -56,7 +64,14 @@ async function updateSalesPeriod() {
   try {
     const days = Number.parseInt(document.getElementById("periodFilter").value);
 
-    const res = await fetch(`${API_BASE}/vendas`);
+    const res = await fetch(`${API_URL}/vendas`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
+
     if (!res.ok) throw new Error("Erro ao buscar vendas");
     const sales = await res.json();
 
@@ -77,7 +92,14 @@ async function updateSalesPeriod() {
 
 async function loadLowStockProducts() {
   try {
-    const res = await fetch(`${API_BASE}/produtos`);
+    const res = await fetch(`${API_URL}/produtos`, {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+      });
+
     if (!res.ok) throw new Error("Erro ao buscar produtos");
     const products = await res.json();
 
