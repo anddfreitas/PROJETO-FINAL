@@ -124,7 +124,7 @@ async function deleteCategory(categoryId) {
   if (confirm("Tem certeza que deseja excluir esta categoria?")) {
     try {
       const response = await fetch(`${API_URL}/categorias`, {
-        method: "GET",
+        method: "DELETE",
         headers: { 
           "Content-Type": "application/json",
           "Authorization": token
